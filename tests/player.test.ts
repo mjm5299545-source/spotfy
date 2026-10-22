@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { nextQueueIndex, normalizePreferences, formatTime } from '../src/player/queue.ts';
+import { normalizeMixer, transitionGain } from '../src/player/mixer.ts';
 
 test('linear queue terminates without repeat and wraps with repeat all', () => {
   assert.equal(nextQueueIndex(3, 0, 'off', false), 1);
@@ -42,4 +43,14 @@ test('timeline uses finite audio time with minute boundaries', () => {
   assert.equal(formatTime(0),'0:00');
   assert.equal(formatTime(Infinity),'0:00');
   assert.equal(formatTime(-3),'0:00');
+});
+test('mixer settings clamp equalizer bands and fade rises and falls over two seconds', () => {
+  assert.deepEqual(normalizeMixer({equalizer:true,bass:99,mids:-99,treble:NaN,smoothTransition:true}),
+    {equalizer:true,bass:12,mids:-12,treble:0,smoothTransition:true});
+  assert.equal(transitionGain(0, 10, true), 0);
+  assert.equal(transitionGain(1, 10, true), .5);
+  assert.equal(transitionGain(5, 10, true), 1);
+  assert.equal(transitionGain(9, 10, true), .5);
+  assert.equal(transitionGain(10, 10, true), 0);
+  assert.equal(transitionGain(0, 10, false), 1);
 });

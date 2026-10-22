@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, CirclePlus, ListMusic, LoaderCircle, Maximize2, Music2, Pause, Play, Repeat, Repeat1, RotateCw, Shuffle, SkipBack, SkipForward, Volume1, Volume2, VolumeX, X } from 'lucide-react';
+import { ChevronDown, CirclePlus, ListMusic, LoaderCircle, Maximize2, Music2, Pause, Play, Repeat, Repeat1, RotateCw, Shuffle, SkipBack, SkipForward, SlidersHorizontal, Volume1, Volume2, VolumeX, X } from 'lucide-react';
 import type { Track } from '../../shared/types.ts';
 import { usePlayer } from './PlayerProvider.tsx';
 import { formatTime } from './queue.ts';
@@ -9,14 +9,15 @@ type Props = { onLike?: (track: Track) => void; likedTrackIds?: string[] };
 export function Player({ onLike, likedTrackIds = [] }: Props) {
   const p = usePlayer();
   const [queueOpen, setQueueOpen] = useState(false);
+  const [mixerOpen, setMixerOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const expandedRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (!expanded && !queueOpen) return;
+    if (!expanded && !queueOpen && !mixerOpen) return;
     const previous = document.activeElement;
     if (expanded) expandedRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setExpanded(false); setQueueOpen(false); }
+      if (event.key === 'Escape') { setExpanded(false); setQueueOpen(false); setMixerOpen(false); }
       if (expanded && event.key === 'Tab') {
         const controls = Array.from(expandedRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled)') ?? []);
         const first = controls[0]; const last = controls[controls.length - 1];
@@ -26,7 +27,7 @@ export function Player({ onLike, likedTrackIds = [] }: Props) {
     };
     document.addEventListener('keydown', onKey);
     return () => { document.removeEventListener('keydown', onKey); if (expanded && previous instanceof HTMLElement) previous.focus(); };
-  }, [expanded, queueOpen]);
+  }, [expanded, queueOpen, mixerOpen]);
   const active = Boolean(p.current);
   const shownDuration = p.duration || p.current?.duration || 0;
   const progress = shownDuration > 0 ? Math.min(100, p.time / shownDuration * 100) : 0;
@@ -54,6 +55,19 @@ export function Player({ onLike, likedTrackIds = [] }: Props) {
       </div>)}
       {p.queue.length === 1 && <p className="sp-queue-empty">Sua fila está vazia. Escolha mais uma música.</p>}
     </aside>}
+    {mixerOpen && <section className="sp-mixer" aria-label="Mixer de áudio">
+      <header><h2>Mixer</h2><button aria-label="Fechar mixer" onClick={() => setMixerOpen(false)}><X size={20}/></button></header>
+      <label className="sp-mixer-toggle"><input type="checkbox" checked={p.mixer.equalizer} disabled={!p.equalizerSupported} onChange={event => p.setEqualizer(event.target.checked)}/> Equalizador</label>
+      {!p.equalizerSupported && <p>Equalização indisponível neste navegador.</p>}
+      {p.mixerError && <p role="alert">{p.mixerError}</p>}
+      {(['bass', 'mids', 'treble'] as const).map((band, index) => <label className="sp-mixer-band" key={band}>
+        <span>{['Graves', 'Médios', 'Agudos'][index]}</span>
+        <input type="range" min="-12" max="12" step="1" value={p.mixer[band]} disabled={!p.mixer.equalizer || !!p.mixerError} onChange={event => p.setMixerBand(band, Number(event.target.value))} aria-label={['Graves', 'Médios', 'Agudos'][index]}/>
+        <output>{p.mixer[band] > 0 ? '+' : ''}{p.mixer[band]} dB</output>
+      </label>)}
+      <label className="sp-mixer-toggle"><input type="checkbox" checked={p.mixer.smoothTransition} onChange={event => p.setSmoothTransition(event.target.checked)}/> Transição suave</label>
+      <p>Fade de 2 segundos no começo e no fim de cada faixa. As músicas não se sobrepõem. Preferências salvas neste dispositivo.</p>
+    </section>}
     {expanded && p.current && <section ref={expandedRef} className="sp-now-playing" role="dialog" aria-modal="true" aria-label="Tocando agora">
       <header><button aria-label="Fechar tocando agora" onClick={() => setExpanded(false)}><ChevronDown/></button><span>TOCANDO AGORA</span><span className="sp-now-brand">Spotfy</span></header>
       <img className="sp-now-cover" src={p.current.cover} alt={`Capa de ${p.current.albumTitle}`}/>
@@ -78,6 +92,7 @@ export function Player({ onLike, likedTrackIds = [] }: Props) {
         {progressBar}
       </div>
       <div className="sp-player-tools">
+        <button className={mixerOpen ? 'is-on' : ''} aria-label="Abrir mixer" title="Mixer" aria-expanded={mixerOpen} onClick={() => setMixerOpen(value => !value)}><SlidersHorizontal size={19}/></button>
         <button className={queueOpen ? 'is-on' : ''} aria-label="Fila de reprodução" title="Fila de reprodução" aria-expanded={queueOpen} onClick={() => setQueueOpen(value => !value)}><ListMusic size={19}/></button>
         <button aria-label={p.muted || p.volume === 0 ? 'Ativar som' : 'Silenciar'} title="Silenciar (M)" onClick={p.toggleMute}><Volume size={19}/></button>
         <input aria-label="Volume" type="range" min="0" max="1" step="0.01" value={p.muted ? 0 : p.volume} style={{ background: `linear-gradient(to right, #b3b3b3 ${(p.muted ? 0 : p.volume) * 100}%, #414141 ${(p.muted ? 0 : p.volume) * 100}%)` }} onChange={event => p.setVolume(Number(event.target.value))}/>

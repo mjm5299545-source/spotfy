@@ -1,11 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Preferences, Track } from '../../shared/types.ts';
 import { nextQueueIndex, normalizePreferences } from './queue.ts';
+import { normalizeMixer, transitionGain, type MixerSettings } from './mixer.ts';
 
 type PlayerContextValue = {
   current: Track | null; playing: boolean; loading: boolean; error: string | null;
   queue: Track[]; queueIndex: number; time: number; duration: number; volume: number;
   muted: boolean; shuffle: boolean; repeat: Preferences['repeat'];
+  mixer: MixerSettings; equalizerSupported: boolean; mixerError: string | null;
+  setEqualizer(enabled: boolean): void; setMixerBand(band: 'bass' | 'mids' | 'treble', gain: number): void;
+  setSmoothTransition(enabled: boolean): void;
   play(track: Track, tracks?: Track[]): void; toggle(): void; next(): void; previous(): void;
   seek(time: number): void; setVolume(volume: number): void; toggleMute(): void;
   toggleShuffle(): void; cycleRepeat(): void; addToQueue(track: Track): void;
@@ -14,9 +18,14 @@ type PlayerContextValue = {
 };
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 const STORAGE = 'spotfy:playback-preferences';
+const MIXER_STORAGE = 'spotfy:mixer-preferences';
 function readPreferences(): Preferences {
   try { return normalizePreferences(JSON.parse(localStorage.getItem(STORAGE) || '{}')); }
   catch { return normalizePreferences(null); }
+}
+function readMixer(): MixerSettings {
+  try { return normalizeMixer(JSON.parse(localStorage.getItem(MIXER_STORAGE) || '{}')); }
+  catch { return normalizeMixer(null); }
 }
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
@@ -34,6 +43,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [preferences, setPreferences] = useState(readPreferences);
+  const [mixer, setMixer] = useState(readMixer);
+  const [mixerError, setMixerError] = useState<string | null>(null);
+  const equalizerSupported = typeof window.AudioContext === 'function';
+  const audioGraph = useRef<{ context: AudioContext; filters: [BiquadFilterNode, BiquadFilterNode, BiquadFilterNode] } | null>(null);
+  const mixerRef = useRef(mixer);
+  mixerRef.current = mixer;
   const [muted, setMuted] = useState(false);
   const audioHost = useRef<HTMLDivElement>(null);
   const shuffleVisited = useRef(new Set<number>());
@@ -47,8 +62,39 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const currentRef = useRef(current);
   currentRef.current = current;
   const moveNext = useRef<() => void>(() => {});
+  const applyAudioLevel = useCallback(() => {
+    audio.volume = model.current.preferences.volume * transitionGain(audio.currentTime, audio.duration, mixerRef.current.smoothTransition);
+  }, [audio]);
+  const setupEqualizer = useCallback(() => {
+    if (audioGraph.current || !equalizerSupported) return;
+    const context = new AudioContext();
+    const source = context.createMediaElementSource(audio);
+    const frequencies = [100, 1000, 8000] as const;
+    const filters = frequencies.map(frequency => {
+      const filter = context.createBiquadFilter();
+      filter.type = 'peaking'; filter.frequency.value = frequency; filter.Q.value = .7;
+      return filter;
+    }) as [BiquadFilterNode, BiquadFilterNode, BiquadFilterNode];
+    source.connect(filters[0]); filters[0].connect(filters[1]); filters[1].connect(filters[2]); filters[2].connect(context.destination);
+    audioGraph.current = { context, filters };
+  }, [audio, equalizerSupported]);
+  const setEqualizer = useCallback((enabled: boolean) => {
+    if (enabled) {
+      try { setupEqualizer(); void audioGraph.current?.context.resume(); setMixerError(null); }
+      catch { setMixerError('Equalizador indisponível neste navegador.'); return; }
+    }
+    setMixer(value => ({ ...value, equalizer: enabled }));
+  }, [setupEqualizer]);
+  const setMixerBand = useCallback((band: 'bass' | 'mids' | 'treble', gain: number) => {
+    if (!Number.isFinite(gain)) return;
+    setMixer(value => ({ ...value, [band]: Math.max(-12, Math.min(12, gain)) }));
+  }, []);
+  const setSmoothTransition = useCallback((enabled: boolean) => {
+    setMixer(value => ({ ...value, smoothTransition: enabled }));
+  }, []);
 
   const attemptPlay = useCallback(() => {
+    if (audioGraph.current) void audioGraph.current.context.resume();
     const token = ++request.current;
     intent.current = true;
     setError(null);
@@ -162,13 +208,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [audio]);
 
   useEffect(() => {
+    if (mixer.equalizer && !audioGraph.current) {
+      try { setupEqualizer(); setMixerError(null); }
+      catch { setMixerError('Equalizador indisponível neste navegador.'); }
+    }
+    audioGraph.current?.filters.forEach((filter, index) => {
+      filter.gain.value = mixer.equalizer ? [mixer.bass, mixer.mids, mixer.treble][index]! : 0;
+    });
+    applyAudioLevel();
+    try { localStorage.setItem(MIXER_STORAGE, JSON.stringify(mixer)); } catch { /* The controls still work for this session. */ }
+  }, [mixer, setupEqualizer, applyAudioLevel]);
+
+  useEffect(() => {
     refreshPreferences();
     window.addEventListener('spotfy:auth-changed', refreshPreferences);
     return () => window.removeEventListener('spotfy:auth-changed', refreshPreferences);
   }, [refreshPreferences]);
 
   useEffect(() => {
-    audio.volume = preferences.volume;
+    applyAudioLevel();
     audio.muted = muted;
     try { localStorage.setItem(STORAGE, JSON.stringify(preferences)); } catch { /* Playback remains available if storage is full. */ }
     const timer = window.setTimeout(() => {
@@ -177,7 +235,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       }).then(response => { if (response.status === 401) authenticated.current = false; }).catch(() => {});
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [audio, preferences, muted]);
+  }, [audio, preferences, muted, applyAudioLevel]);
 
   useEffect(() => {
     if (!current) return;
@@ -190,8 +248,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setLoading(intent.current);
     audio.src = current.audioUrl;
     audio.load();
+    applyAudioLevel();
     if (intent.current) attemptPlay();
-  }, [audio, current?.id, current?.audioUrl, attemptPlay]);
+  }, [audio, current?.id, current?.audioUrl, attemptPlay, applyAudioLevel]);
 
   useEffect(() => {
     const events = {
@@ -210,8 +269,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       waiting: () => { if (intent.current) setLoading(true); },
       stalled: () => { if (intent.current) setLoading(true); },
       canplay: () => setLoading(false),
-      timeupdate: () => setTime(audio.currentTime),
-      durationchange: () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0),
+      timeupdate: () => { setTime(audio.currentTime); applyAudioLevel(); },
+      durationchange: () => { setDuration(Number.isFinite(audio.duration) ? audio.duration : 0); applyAudioLevel(); },
       ended: () => {
         if (model.current.preferences.repeat === 'one') { audio.currentTime = 0; attemptPlay(); }
         else moveNext.current();
@@ -231,7 +290,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       audio.removeAttribute('src');
       audio.load();
     };
-  }, [audio, attemptPlay]);
+  }, [audio, attemptPlay, applyAudioLevel]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -288,7 +347,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
   const retry = useCallback(() => { if (currentRef.current) { audio.load(); attemptPlay(); } }, [audio, attemptPlay]);
 
-  return <PlayerContext.Provider value={{ current, playing, loading, error, queue, queueIndex, time, duration, volume: preferences.volume, muted, shuffle: preferences.shuffle, repeat: preferences.repeat, play, toggle, next, previous, seek, setVolume, toggleMute, toggleShuffle, cycleRepeat, addToQueue, removeFromQueue, playQueueIndex: selectQueueIndex, clearQueue, retry, refreshPreferences }}>{children}<div hidden ref={audioHost} /></PlayerContext.Provider>;
+  return <PlayerContext.Provider value={{ current, playing, loading, error, queue, queueIndex, time, duration, volume: preferences.volume, muted, shuffle: preferences.shuffle, repeat: preferences.repeat, mixer, equalizerSupported, mixerError, setEqualizer, setMixerBand, setSmoothTransition, play, toggle, next, previous, seek, setVolume, toggleMute, toggleShuffle, cycleRepeat, addToQueue, removeFromQueue, playQueueIndex: selectQueueIndex, clearQueue, retry, refreshPreferences }}>{children}<div hidden ref={audioHost} /></PlayerContext.Provider>;
 }
 export function usePlayer(): PlayerContextValue {
   const value = useContext(PlayerContext);

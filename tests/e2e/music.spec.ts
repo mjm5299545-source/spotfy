@@ -101,6 +101,42 @@ test('áudio real avança, pausa, busca posição e controla volume',async({page
  await expect.poll(()=>audio.evaluate((a:HTMLAudioElement)=>a.muted||a.volume===0)).toBe(true);
 });
 
+test('mixer aplica filtros, fade de volume e restaura escolhas após recarregar',async({page})=>{
+ await page.addInitScript(()=>{
+   const context=AudioContext.prototype;
+   const original=context.createBiquadFilter;
+   (window as Window & {spotfyFilters?:BiquadFilterNode[]}).spotfyFilters=[];
+   context.createBiquadFilter=function(){
+     const filter=original.call(this);
+     (window as Window & {spotfyFilters?:BiquadFilterNode[]}).spotfyFilters!.push(filter);
+     return filter;
+   };
+ });
+ const tracks=await navigateToTrackList(page);
+ await page.getByRole('button',{name:`Reproduzir ${tracks[0].title}`,exact:true}).click();
+ await page.getByRole('button',{name:'Abrir mixer'}).click();
+ const mixer=page.getByRole('region',{name:'Mixer de áudio'});
+ await mixer.getByRole('checkbox',{name:'Equalizador'}).check();
+ await mixer.getByRole('slider',{name:'Graves'}).fill('6');
+ await expect.poll(()=>page.evaluate(()=>(window as Window & {spotfyFilters?:BiquadFilterNode[]}).spotfyFilters?.[0]?.gain.value)).toBe(6);
+ await mixer.getByRole('checkbox',{name:'Transição suave'}).check();
+ const audio=page.getByTestId('audio-player');
+ await expect.poll(()=>audio.evaluate((a:HTMLAudioElement)=>a.duration)).toBeGreaterThan(10);
+ await audio.evaluate((a:HTMLAudioElement)=>{a.currentTime=1;a.dispatchEvent(new Event('timeupdate'));});
+ await expect.poll(()=>audio.evaluate((a:HTMLAudioElement)=>a.volume)).toBeCloseTo(.35,1);
+ await page.reload();
+ await page.getByRole('button',{name:'Abrir mixer'}).click();
+ await expect(mixer.getByRole('checkbox',{name:'Equalizador'})).toBeChecked();
+ await expect(mixer.getByRole('slider',{name:'Graves'})).toHaveValue('6');
+ await expect(mixer.getByRole('checkbox',{name:'Transição suave'})).toBeChecked();
+ await mixer.getByRole('checkbox',{name:'Equalizador'}).uncheck();
+ await expect.poll(()=>page.evaluate(()=>(window as Window & {spotfyFilters?:BiquadFilterNode[]}).spotfyFilters?.[0]?.gain.value)).toBe(0);
+ await page.setViewportSize({width:360,height:740});
+ await mixer.getByRole('button',{name:'Fechar mixer'}).click();
+ await page.getByRole('button',{name:'Abrir mixer'}).click();
+ await expect(mixer).toBeVisible();
+});
+
 test('falha de mídia avisa a pessoa e a próxima faixa recupera a reprodução',async({page})=>{
  const tracks=await navigateToTrackList(page);
  await page.route(`**${tracks[0].audioUrl}`,route=>route.abort('failed'));
