@@ -1,0 +1,304 @@
+{
+  "tracks": [
+    {
+      "id": "track-01",
+      "title": "Primeira luz",
+      "artistId": "aurora",
+      "artistName": "Aurora Coletiva",
+      "albumId": "horizontes",
+      "albumTitle": "Horizontes",
+      "cover": "/media/horizontes.svg",
+      "duration": 40,
+      "audioUrl": "/media/track-01.wav",
+      "category": "Chill",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-02",
+      "title": "Cidade ao longe",
+      "artistId": "aurora",
+      "artistName": "Aurora Coletiva",
+      "albumId": "horizontes",
+      "albumTitle": "Horizontes",
+      "cover": "/media/horizontes.svg",
+      "duration": 44,
+      "audioUrl": "/media/track-02.wav",
+      "category": "Chill",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-03",
+      "title": "Entre planetas",
+      "artistId": "atlas",
+      "artistName": "Atlas Sonoro",
+      "albumId": "orbita",
+      "albumTitle": "Órbita",
+      "cover": "/media/orbita.svg",
+      "duration": 48,
+      "audioUrl": "/media/track-03.wav",
+      "category": "Foco",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-04",
+      "title": "Gravidade leve",
+      "artistId": "atlas",
+      "artistName": "Atlas Sonoro",
+      "albumId": "orbita",
+      "albumTitle": "Órbita",
+      "cover": "/media/orbita.svg",
+      "duration": 52,
+      "audioUrl": "/media/track-04.wav",
+      "category": "Foco",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-05",
+      "title": "Café na janela",
+      "artistId": "lume",
+      "artistName": "Lume",
+      "albumId": "golden",
+      "albumTitle": "Depois das seis",
+      "cover": "/media/golden.svg",
+      "duration": 40,
+      "audioUrl": "/media/track-05.wav",
+      "category": "Jazz",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-06",
+      "title": "Fim de tarde",
+      "artistId": "lume",
+      "artistName": "Lume",
+      "albumId": "golden",
+      "albumTitle": "Depois das seis",
+      "cover": "/media/golden.svg",
+      "duration": 44,
+      "audioUrl": "/media/track-06.wav",
+      "category": "Jazz",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-07",
+      "title": "Mar aberto",
+      "artistId": "norte",
+      "artistName": "Norte Azul",
+      "albumId": "azul",
+      "albumTitle": "Tudo azul",
+      "cover": "/media/azul.svg",
+      "duration": 48,
+      "audioUrl": "/media/track-07.wav",
+      "category": "Ambiente",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-08",
+      "title": "Linha do horizonte",
+      "artistId": "norte",
+      "artistName": "Norte Azul",
+      "albumId": "azul",
+      "albumTitle": "Tudo azul",
+      "cover": "/media/azul.svg",
+      "duration": 52,
+      "audioUrl": "/media/track-08.wav",
+      "category": "Ambiente",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-09",
+      "title": "Passos na chuva",
+      "artistId": "soma",
+      "artistName": "Soma",
+      "albumId": "fluxo",
+      "albumTitle": "Em movimento",
+      "cover": "/media/fluxo.svg",
+      "duration": 40,
+      "audioUrl": "/media/track-09.wav",
+      "category": "Eletrônica",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-10",
+      "title": "Sem pressa",
+      "artistId": "soma",
+      "artistName": "Soma",
+      "albumId": "fluxo",
+      "albumTitle": "Em movimento",
+      "cover": "/media/fluxo.svg",
+      "duration": 44,
+      "audioUrl": "/media/track-10.wav",
+      "category": "Eletrônica",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-11",
+      "title": "Pausa para respirar",
+      "artistId": "brisa",
+      "artistName": "Brisa Estúdio",
+      "albumId": "silencio",
+      "albumTitle": "Um lugar tranquilo",
+      "cover": "/media/silencio.svg",
+      "duration": 48,
+      "audioUrl": "/media/track-11.wav",
+      "category": "Foco",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    },
+    {
+      "id": "track-12",
+      "title": "Jardim interior",
+      "artistId": "brisa",
+      "artistName": "Brisa Estúdio",
+      "albumId": "silencio",
+      "albumTitle": "Um lugar tranquilo",
+      "cover": "/media/silencio.svg",
+      "duration": 52,
+      "audioUrl": "/media/track-12.wav",
+      "category": "Ambiente",
+      "license": "CC0-1.0 — composição, gravação e arte originais Spotfy"
+    }
+  ],
+  "artists": [
+    {
+      "id": "aurora",
+      "name": "Aurora Coletiva",
+      "bio": "Paisagens sonoras para desacelerar.",
+      "image": "/media/horizontes.svg"
+    },
+    {
+      "id": "atlas",
+      "name": "Atlas Sonoro",
+      "bio": "Pequenas viagens em grandes frequências.",
+      "image": "/media/orbita.svg"
+    },
+    {
+      "id": "lume",
+      "name": "Lume",
+      "bio": "Texturas quentes, melodias leves.",
+      "image": "/media/golden.svg"
+    },
+    {
+      "id": "norte",
+      "name": "Norte Azul",
+      "bio": "Entre o jazz eletrônico e o horizonte.",
+      "image": "/media/azul.svg"
+    },
+    {
+      "id": "soma",
+      "name": "Soma",
+      "bio": "Pulso, movimento e novas perspectivas.",
+      "image": "/media/fluxo.svg"
+    },
+    {
+      "id": "brisa",
+      "name": "Brisa Estúdio",
+      "bio": "Espaço para respirar e ouvir.",
+      "image": "/media/silencio.svg"
+    }
+  ],
+  "albums": [
+    {
+      "id": "horizontes",
+      "title": "Horizontes",
+      "artistId": "aurora",
+      "artistName": "Aurora Coletiva",
+      "cover": "/media/horizontes.svg",
+      "year": 2026
+    },
+    {
+      "id": "orbita",
+      "title": "Órbita",
+      "artistId": "atlas",
+      "artistName": "Atlas Sonoro",
+      "cover": "/media/orbita.svg",
+      "year": 2026
+    },
+    {
+      "id": "golden",
+      "title": "Depois das seis",
+      "artistId": "lume",
+      "artistName": "Lume",
+      "cover": "/media/golden.svg",
+      "year": 2026
+    },
+    {
+      "id": "azul",
+      "title": "Tudo azul",
+      "artistId": "norte",
+      "artistName": "Norte Azul",
+      "cover": "/media/azul.svg",
+      "year": 2026
+    },
+    {
+      "id": "fluxo",
+      "title": "Em movimento",
+      "artistId": "soma",
+      "artistName": "Soma",
+      "cover": "/media/fluxo.svg",
+      "year": 2026
+    },
+    {
+      "id": "silencio",
+      "title": "Um lugar tranquilo",
+      "artistId": "brisa",
+      "artistName": "Brisa Estúdio",
+      "cover": "/media/silencio.svg",
+      "year": 2026
+    }
+  ],
+  "playlists": [
+    {
+      "id": "editorial-chill",
+      "name": "Seu momento de paz",
+      "description": "Desligue o mundo. Aumente o som.",
+      "cover": "/media/horizontes.svg",
+      "ownerId": null,
+      "ownerName": "Spotfy",
+      "isPublic": true,
+      "trackIds": [
+        "track-01",
+        "track-02",
+        "track-07",
+        "track-08",
+        "track-12"
+      ]
+    },
+    {
+      "id": "editorial-focus",
+      "name": "Foco profundo",
+      "description": "Uma trilha para suas melhores ideias.",
+      "cover": "/media/orbita.svg",
+      "ownerId": null,
+      "ownerName": "Spotfy",
+      "isPublic": true,
+      "trackIds": [
+        "track-03",
+        "track-04",
+        "track-11"
+      ]
+    },
+    {
+      "id": "editorial-all",
+      "name": "Descobertas da semana",
+      "description": "Novos sons, novas histórias. Só originais.",
+      "cover": "/media/fluxo.svg",
+      "ownerId": null,
+      "ownerName": "Spotfy",
+      "isPublic": true,
+      "trackIds": [
+        "track-01",
+        "track-02",
+        "track-03",
+        "track-04",
+        "track-05",
+        "track-06",
+        "track-07",
+        "track-08",
+        "track-09",
+        "track-10",
+        "track-11",
+        "track-12"
+      ]
+    }
+  ],
+  "total": 12
+}
