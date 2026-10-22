@@ -1,6 +1,7 @@
 name: Validate music app
 on:
   push:
+    branches: [main]
   pull_request:
 permissions:
   contents: read
@@ -39,7 +40,8 @@ jobs:
       - run: npm test
       - run: npm run test:postgres
       - run: npm run build
-      - run: npm audit --audit-level=moderate
+      - name: Audit dependencies
+        run: node scripts/ci-audit.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - name: Annotate browser test failures
