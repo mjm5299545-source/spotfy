@@ -47,7 +47,7 @@ As duas verificações visuais com Playwright passaram contra os novos snapshots
 | Entrega externa de recuperação de senha | **Bloqueada** por SMTP ausente | Configurar serviço/remetente e credenciais no ambiente seguro; validar recebimento em caixa controlada |
 | Regressão contra interface anterior | **Não aplicável**: base não tinha frontend | Baseline desta interface já criado; usá-lo em mudanças futuras |
 | Leitor de tela, teclado completo e qualidade auditiva | **Não executados manualmente** | Teste humano com dispositivo e áudio adequados |
-| CI no GitHub | **Não observado nesta tarefa** | Verificar execução remota após push/PR |
+| CI no GitHub | **Em andamento** após push e PR #1; dois checks `quality` observados como `pending` | Conferir conclusão do workflow na página do PR; não contar como aprovado antes disso |
 | Deploy público, HTTPS, backups externos | **Não executados** | Planejamento operacional separado; não solicitado nesta entrega |
 
 Não foram contabilizados testes bloqueados como aprovados. O status da publicação fica em [CONTINUIDADE_CODEX.md](CONTINUIDADE_CODEX.md).

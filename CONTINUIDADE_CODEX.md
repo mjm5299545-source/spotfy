@@ -32,7 +32,7 @@ O schema inicial é aditivo, usa `schema_migrations` versão 1 e cria as entidad
 2. **E-mail externo:** o fluxo local por token pode ser testado; entrega real requer configuração SMTP segura e um remetente autorizado.
 3. **Conteúdo:** catálogo independente de áudio original. Não há catálogo comercial do Spotify, Spotify Connect, DRM ou login Spotify.
 4. **Validação:** testes não executados não são aprovados. Ver o relatório para distinguir API, navegador, áudio, imagem, segurança e verificações manuais.
-5. **Publicação:** o commit de implementação `936b323` foi confirmado no remoto `feat/music-player` por `git ls-remote`. Isso não demonstra a existência de um Pull Request; registrar sua URL somente se a plataforma a retornar.
+5. **Publicação:** o commit de implementação `936b323` e o de documentação `0e41993` foram confirmados no remoto `feat/music-player` por `git ls-remote`. O Pull Request [#1](https://github.com/mjm5299545-source/spotfy/pull/1) foi criado contra `main` e permanece aberto.
 6. **Operação pública:** não foi solicitado deploy. HTTPS, política de dados, backups e serviço de e-mail devem ser definidos antes de operação pública.
 
 ## Como retomar
@@ -47,4 +47,4 @@ O schema inicial é aditivo, usa `schema_migrations` versão 1 e cria as entidad
 
 ## Estado da publicação
 
-Implementação `936b323881ccd605c31580f5133e9cf444a1ea6e` publicada em `origin/feat/music-player`, com SHA remoto idêntico ao local na verificação. Documentação e Pull Request serão registrados somente após suas respectivas operações confirmadas. Não houve merge nem deploy.
+Implementação `936b323881ccd605c31580f5133e9cf444a1ea6e` e documentação `0e41993002f419a2f4ed69310ad136a992153fcf` publicadas em `origin/feat/music-player`, com SHA remoto idêntico ao local na verificação. Pull Request [#1](https://github.com/mjm5299545-source/spotfy/pull/1) aberto contra `main`. O workflow de CI foi iniciado; seu resultado final deve ser conferido no PR. Não houve merge nem deploy.
