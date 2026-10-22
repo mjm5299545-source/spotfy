@@ -18,9 +18,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       res.once('close', resolve);
       try { app(req, res); } catch (error) { reject(error); }
     });
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    const code = message.startsWith('DATABASE_URL precisa') ? 'missing_database_url'
+      : message.startsWith('BLOB_READ_WRITE_TOKEN é necessário') ? 'missing_blob_token'
+      : 'startup_failed';
     res.statusCode = 503;
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({ error: 'Serviço indisponível. Verifique a configuração de banco e armazenamento.' }));
+    res.end(JSON.stringify({ error: 'Serviço indisponível. Verifique a configuração de banco e armazenamento.', code }));
   }
 }
