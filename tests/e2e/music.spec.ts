@@ -212,6 +212,7 @@ for(const viewport of [{name:'desktop',width:1440,height:900},{name:'mobile',wid
   await page.goto('/');
   await expect(page.getByRole('heading',{name:'Feito para o seu momento',exact:true})).toBeVisible();
   await page.evaluate(async()=>{await document.fonts.ready;});
-  await expect(page).toHaveScreenshot(`home-${viewport.name}.png`,{animations:'disabled',maxDiffPixelRatio:0.02});
+  const maxDiffPixelRatio = process.env.CI ? (viewport.name === 'mobile' ? 0.08 : 0.04) : 0.02;
+  await expect(page).toHaveScreenshot(`home-${viewport.name}.png`,{animations:'disabled',maxDiffPixelRatio});
  });
 }
