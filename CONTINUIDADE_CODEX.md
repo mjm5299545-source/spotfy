@@ -47,4 +47,4 @@ O schema inicial é aditivo, usa `schema_migrations` versão 1 e cria as entidad
 
 ## Estado da publicação
 
-Implementação `936b323881ccd605c31580f5133e9cf444a1ea6e` e documentação `0e41993002f419a2f4ed69310ad136a992153fcf` publicadas em `origin/feat/music-player`, com SHA remoto idêntico ao local na verificação. Pull Request [#1](https://github.com/mjm5299545-source/spotfy/pull/1) aberto contra `main`. O workflow de CI foi iniciado; seu resultado final deve ser conferido no PR. Não houve merge nem deploy.
+Implementação `936b323881ccd605c31580f5133e9cf444a1ea6e` e documentação `0e41993002f419a2f4ed69310ad136a992153fcf` publicadas em `origin/feat/music-player`. Pull Request [#1](https://github.com/mjm5299545-source/spotfy/pull/1) aberto contra `main`. No commit `914ca7b`, os checks `quality` de push e PR concluíram com `SUCCESS`; confirmar checks novamente após qualquer commit posterior. Não houve merge nem deploy.
