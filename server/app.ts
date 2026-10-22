@@ -12,7 +12,7 @@ import { createDatabase, id, passwordHash, passwordMatches, hashToken, publicUse
 import type { DatabaseSync } from 'node:sqlite';
 import type { AppDatabase } from './database-contract.ts';
 import { put } from '@vercel/blob';
-import catalog from '../public/catalog.json';
+import catalog from '../public/catalog.json' with { type: 'json' };
 import type { User } from '../shared/types.ts';
 export interface AppOptions {
     dbPath?: string;

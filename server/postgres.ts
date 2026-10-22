@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { Pool, type PoolClient } from 'pg';
-import catalog from '../public/catalog.json';
+import catalog from '../public/catalog.json' with { type: 'json' };
 import type { AppDatabase } from './database-contract.ts';
 
 const schema = `
