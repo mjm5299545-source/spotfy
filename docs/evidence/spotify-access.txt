@@ -1,0 +1,22 @@
+Alvo: https://open.spotify.com/intl-pt
+Horário da resposta: 2026-10-21 00:54:43 UTC / 2026-10-20 21:54:43 America/Sao_Paulo
+Operação: curl -I --max-time 25 https://open.spotify.com/intl-pt
+Saída relevante observada pelo agente principal:
+
+HTTP/1.1 403 Forbidden
+content-length: 16
+content-type: text/plain
+server: envoy
+connection: close
+curl: (56) CONNECT tunnel failed, response 403
+
+Interpretação: o túnel HTTPS foi negado antes de obter a página. Não é uma resposta
+comportamental do Spotify Web Player e não comprova indisponibilidade do serviço.
+Não foram observados DOM, telas, scripts, APIs, login ou reprodução do Spotify.
+
+Foi salvo um rascunho de rede acrescentando os domínios open.spotify.com,
+accounts.spotify.com, developer.spotify.com, *.scdn.co, *.spotifycdn.com
+e api.github.com,
+preservando os presets. A ferramenta confirmou status=saved e requires_publish=true.
+Salvar o rascunho não aplica a política à instância atual nem publica o ambiente.
+Não foi usado acesso direto, alteração de proxy ou outro contorno.

@@ -1,0 +1,22 @@
+{
+  "repository": "mjm5299545-source/spotfy",
+  "base_commit": "55b820f2c96cc485101a6b2c0de2bb35f923c13e",
+  "initial_branch": "work",
+  "implementation_branch": "feat/music-player",
+  "restore_branch": "backup/pre-music-app-55b820f",
+  "tracked_files_at_base": [{"path":"README.md","bytes":8,"content":"# spotfy"}],
+  "initial_worktree_clean": true,
+  "existing_interface": false,
+  "existing_application": false,
+  "existing_database": false,
+  "existing_tests": false,
+  "existing_dependency_manifest": false,
+  "evidence_commands": [
+    "git status --porcelain=v1",
+    "git log -1 --oneline",
+    "git ls-tree -r --name-only HEAD",
+    "git show 55b820f:README.md",
+    "git ls-remote origin refs/heads/main"
+  ],
+  "remote_main_at_audit": "55b820f2c96cc485101a6b2c0de2bb35f923c13e"
+}
