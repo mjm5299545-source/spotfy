@@ -64,6 +64,7 @@ Base auditada: `55b820f` (somente `README.md`). Todas as funcionalidades estavam
 | Qualidade | Unitários, integração, E2E e regressão | R/L | Implementado no aplicativo local | Node test, Playwright | Crítica | Cenários relevantes executados e resultados registrados | Aprovado — cenário aplicável executado; ver RELATORIO_TESTES.md |
 | Qualidade | Regressão visual contra interface anterior | E01 | Implementado; limite indicado no resultado | Evidência da base | Média | Registrar baseline local novo; não alegar preservação de screenshot inexistente | Não aplicável — não havia interface anterior; novo baseline desktop/mobile passou |
 | GitHub | Branch, commits, push e Pull Request | E02/R | Branch e backup locais criados; PR #1 aberto contra main | Git HTTPS e API GitHub | Alta | Confirmar SHA remoto e URL real do PR; sem merge automático | Aprovado — SHA remoto conferido e PR https://github.com/mjm5299545-source/spotfy/pull/1 criado |
+| Hospedagem | Vercel com banco e uploads persistentes | R/L | Migração preparada em `feat/vercel-deploy` | PostgreSQL, Vercel Blob e conta Vercel | Alta | Publicar, obter URL HTTPS, cadastrar e persistir dados após novo deploy | Bloqueado — conta/projeto e serviços não conectados; código local testado separadamente |
 
 ## Limites de conclusão
 

@@ -51,3 +51,21 @@ As duas verificações visuais com Playwright passaram contra os novos snapshots
 | Deploy público, HTTPS, backups externos | **Não executados** | Planejamento operacional separado; não solicitado nesta entrega |
 
 Não foram contabilizados testes bloqueados como aprovados. O status da publicação fica em [CONTINUIDADE_CODEX.md](CONTINUIDADE_CODEX.md).
+
+## Adendo: migração para Vercel
+
+Na branch `feat/vercel-deploy`, o backend recebeu adaptador PostgreSQL e upload para Vercel Blob, mantendo SQLite para uso local. Os 12 WAV autorais, antes ignorados, passam a ser versionados para o build estático. Este adendo descreve apenas a validação do código de migração; nenhum deploy Vercel foi realizado.
+
+| Verificação | Resultado |
+| --- | --- |
+| Instalação reproduzível | `npm ci --cache /workspace/.npm-cache --no-audit --no-fund`: 286 pacotes pelo novo lockfile |
+| PostgreSQL 17 isolado em Docker | `npm run test:postgres` com `DATABASE_URL_TEST`: 2 testes passaram, cobrindo seed, consultas, cadastro, sessão, playlist, rollback, autorização administrativa, uploads de áudio e imagem com Blob simulado, validação de URL e integridade referencial |
+| Primeiro administrador no PostgreSQL | `npm run admin:create` com credenciais exclusivamente de teste: criação passou; repetição rejeitou sobrescrita com código 1 esperado |
+| Entrada da função hospedada | `api/index.ts` montado em servidor HTTP local com PostgreSQL de teste e token Blob fictício: `/api/health` respondeu 200 e `database: connected` |
+| SQLite existente | `npm test`: 16 testes passaram após a adaptação assíncrona das rotas |
+| Tipos, lint e build | `npm run typecheck`, `npm run lint` e `npm run build`: passaram após a migração; 12 WAV aparecem em `dist/media/` |
+| Navegador local | `npm run test:e2e`: 15 cenários passaram, incluindo áudio, administração e os baselines visuais |
+| Dependências | `npm audit --audit-level=moderate`: 0 vulnerabilidades encontradas após incluir PostgreSQL e Blob |
+| Vercel real, PostgreSQL gerenciado e Blob real | **Não executados**: conta/projeto e serviços ainda não foram conectados; o upload em teste usou um adaptador simulado |
+
+Os testes originais acima foram executados antes da migração; a linha sobre WAV ignorados registra o estado naquele momento. Para os próximos builds, os WAV versionados estarão disponíveis sem rodar Python. Ver [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md) para a validação externa pendente.
