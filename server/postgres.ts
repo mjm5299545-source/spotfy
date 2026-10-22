@@ -31,23 +31,53 @@ const schema = `
   INSERT INTO schema_migrations(version) VALUES(1) ON CONFLICT DO NOTHING;
   INSERT INTO schema_migrations(version) VALUES(2) ON CONFLICT DO NOTHING;
 `;
+const appSchema = 'spotfy_private';
 
 export async function createPostgresDatabase(url: string): Promise<AppDatabase> {
   const pool = new Pool({ connectionString: url, max: 5, connectionTimeoutMillis: 10000 });
   const context = new AsyncLocalStorage<PoolClient>();
   // `?` placeholders keep the local SQLite queries shared with PostgreSQL.
-  const execute = (sql: string, params: any[]) => {
+  const execute = async (sql: string, params: any[]) => {
     let index = 0;
     const statement = sql.replace(/^INSERT OR IGNORE INTO /i, 'INSERT INTO ').replace(/\b([pt])\.rowid\b/g, '$1.created_at').replace(/\?/g, () => `$${++index}`);
     const finalSql = /^INSERT OR IGNORE INTO /i.test(sql) ? `${statement} ON CONFLICT DO NOTHING` : statement;
-    return (context.getStore() ?? pool).query(finalSql, params);
+    const active = context.getStore();
+    if (active) return active.query(finalSql, params);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL search_path TO ${appSchema}`);
+      const result = await client.query(finalSql, params);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   };
   try {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(748193)');
+      await client.query(`CREATE SCHEMA IF NOT EXISTS ${appSchema}`);
+      await client.query(`SET LOCAL search_path TO ${appSchema}`);
       await client.query(schema);
+      await client.query(`REVOKE ALL ON SCHEMA ${appSchema} FROM PUBLIC`);
+      await client.query(`REVOKE ALL ON ALL TABLES IN SCHEMA ${appSchema} FROM PUBLIC`);
+      await client.query(`REVOKE ALL ON ALL SEQUENCES IN SCHEMA ${appSchema} FROM PUBLIC`);
+      for (const role of ['anon', 'authenticated']) {
+        const exists = await client.query('SELECT 1 FROM pg_roles WHERE rolname=$1', [role]);
+        if (exists.rowCount) {
+          await client.query(`REVOKE ALL ON SCHEMA ${appSchema} FROM ${role}`);
+          await client.query(`REVOKE ALL ON ALL TABLES IN SCHEMA ${appSchema} FROM ${role}`);
+          await client.query(`REVOKE ALL ON ALL SEQUENCES IN SCHEMA ${appSchema} FROM ${role}`);
+          await client.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${appSchema} REVOKE ALL ON TABLES FROM ${role}`);
+          await client.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${appSchema} REVOKE ALL ON SEQUENCES FROM ${role}`);
+        }
+      }
       const existing = await client.query('SELECT id FROM artists LIMIT 1');
       if (existing.rowCount === 0) {
         for (const artist of catalog.artists) await client.query('INSERT INTO artists VALUES($1,$2,$3,$4)', [artist.id, artist.name, artist.bio, artist.image]);
@@ -82,6 +112,7 @@ export async function createPostgresDatabase(url: string): Promise<AppDatabase> 
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
+        await client.query(`SET LOCAL search_path TO ${appSchema}`);
         const result = await context.run(client, work);
         await client.query('COMMIT');
         return result;

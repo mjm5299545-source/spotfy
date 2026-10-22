@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import { once } from 'node:events';
 import { createServer } from 'node:http';
+import { Pool } from 'pg';
 import { createApp } from '../../server/app.ts';
 import { createPostgresDatabase } from '../../server/postgres.ts';
 
@@ -16,6 +17,25 @@ const address = server.address();
 if (!address || typeof address === 'string') throw new Error('Servidor de teste indisponível.');
 const base = `http://127.0.0.1:${address.port}`;
 after(async () => { server.close(); await once(server, 'close'); await database.close(); });
+
+test('dados da aplicação ficam fora do schema público', async () => {
+  const pool = new Pool({ connectionString: url });
+  try {
+    const { rows: [row] } = await pool.query(`
+      SELECT to_regclass('public.users') IS NULL AS public_empty,
+             to_regclass('spotfy_private.users') IS NOT NULL AS private_users,
+             NOT EXISTS (
+               SELECT 1 FROM pg_namespace n, aclexplode(n.nspacl) acl
+               WHERE n.nspname='spotfy_private' AND acl.grantee=0 AND acl.privilege_type='USAGE'
+             ) AS no_public_usage
+    `);
+    assert.equal(row.public_empty, true);
+    assert.equal(row.private_users, true);
+    assert.equal(row.no_public_usage, true);
+  } finally {
+    await pool.end();
+  }
+});
 
 async function request(path: string, method = 'GET', data?: unknown, cookie?: string) {
   const response = await fetch(base + path, { method, headers: { ...(data ? { 'Content-Type': 'application/json' } : {}), ...(cookie ? { Cookie: cookie } : {}) }, body: data ? JSON.stringify(data) : undefined });

@@ -372,6 +372,8 @@ export function createApp(options: AppOptions = {}) {
         }
         if (!ext)
             throw fail(400, 'Formato não permitido. Use WAV, MP3, OGG, FLAC, PNG, JPEG ou WebP.');
+        if (options.hosted && !options.uploadAsset && !process.env.BLOB_READ_WRITE_TOKEN)
+            throw fail(503, 'Upload indisponível: armazenamento ainda não configurado.');
         const assetId = id(), filename = `${assetId}.${ext}`;
         const url = options.hosted
             ? await (options.uploadAsset?.(filename, bytes, mime) ?? put(filename, bytes, { access: 'public', contentType: mime, addRandomSuffix: false }).then(asset => asset.url))
