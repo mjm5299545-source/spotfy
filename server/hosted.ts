@@ -1,5 +1,5 @@
-import { createApp } from './app.ts';
-import { createPostgresDatabase } from './postgres.ts';
+import { createApp } from './app.js';
+import { createPostgresDatabase } from './postgres.js';
 
 export async function createHostedApp() {
   const databaseUrl = process.env.DATABASE_URL;

@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { randomBytes } from 'node:crypto';
 import { resolve, join } from 'node:path';
 import { mkdirSync, writeFileSync, existsSync, chmodSync, statSync, openSync, readSync, closeSync } from 'node:fs';
-import { createDatabase, id, passwordHash, passwordMatches, hashToken, publicUser, getArtists, getAlbums, getTracks, getPlaylists } from './db.ts';
+import { createDatabase, id, passwordHash, passwordMatches, hashToken, publicUser, getArtists, getAlbums, getTracks, getPlaylists } from './db.js';
 import type { DatabaseSync } from 'node:sqlite';
 import type { AppDatabase } from './database-contract.ts';
 import { put } from '@vercel/blob';

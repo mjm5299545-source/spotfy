@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { createHostedApp } from '../server/hosted.ts';
+import { createHostedApp } from '../server/hosted.js';
 
 let instance: ReturnType<typeof createHostedApp> | undefined;
 function getInstance() {
