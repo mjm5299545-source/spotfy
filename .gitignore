@@ -7,4 +7,3 @@ data/
 playwright-report/
 test-results/
 *.log
-public/media/*.wav

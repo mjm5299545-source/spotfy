@@ -3,6 +3,7 @@ import { mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 import type { Catalog, Track, Album, Artist, Playlist, User } from '../shared/types.ts';
+import type { AppDatabase } from './database-contract.ts';
 
 export const id = () => randomBytes(16).toString('hex');
 export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
@@ -50,9 +51,9 @@ export function createDatabase(path: string, catalogPath?: string) {
     try {
       for (const a of c.artists) db.prepare('INSERT INTO artists VALUES(?,?,?,?)').run(a.id,a.name,a.bio,a.image);
       for (const a of c.albums) db.prepare('INSERT INTO albums VALUES(?,?,?,?,?)').run(a.id,a.title,a.artistId,a.cover,a.year);
-      for (const t of c.tracks) db.prepare('INSERT INTO tracks VALUES(?,?,?,?,?,?,?,?,?)').run(t.id,t.title,t.artistId,t.albumId,t.cover,t.duration,t.audioUrl,t.category,t.license);
+      for (const t of c.tracks) db.prepare('INSERT INTO tracks(id,title,artist_id,album_id,cover,duration,audio_url,category,license) VALUES(?,?,?,?,?,?,?,?,?)').run(t.id,t.title,t.artistId,t.albumId,t.cover,t.duration,t.audioUrl,t.category,t.license);
       for (const p of c.playlists) {
-        db.prepare('INSERT INTO playlists VALUES(?,?,?,?,?,?)').run(p.id,p.name,p.description,p.cover,null,1);
+        db.prepare('INSERT INTO playlists(id,name,description,cover,owner_id,is_public) VALUES(?,?,?,?,?,?)').run(p.id,p.name,p.description,p.cover,null,1);
         p.trackIds.forEach((tid,i)=>db.prepare('INSERT INTO playlist_tracks VALUES(?,?,?)').run(p.id,tid,i));
       }
       db.exec('COMMIT');
@@ -61,13 +62,14 @@ export function createDatabase(path: string, catalogPath?: string) {
   return db;
 }
 export const publicUser = (u: any): User => ({id:u.id,name:u.name,email:u.email,role:u.role});
-export function getArtists(db: DatabaseSync): Artist[] { return db.prepare('SELECT * FROM artists ORDER BY name').all() as unknown as Artist[]; }
-export function getAlbums(db: DatabaseSync): Album[] {
-  return db.prepare('SELECT a.id,a.title,a.artist_id artistId,r.name artistName,a.cover,a.year FROM albums a JOIN artists r ON a.artist_id=r.id ORDER BY a.year DESC,a.title').all() as unknown as Album[];
+export async function getArtists(db: AppDatabase): Promise<Artist[]> { return await db.prepare('SELECT * FROM artists ORDER BY name').all() as Artist[]; }
+export async function getAlbums(db: AppDatabase): Promise<Album[]> {
+  return await db.prepare('SELECT a.id,a.title,a.artist_id "artistId",r.name "artistName",a.cover,a.year FROM albums a JOIN artists r ON a.artist_id=r.id ORDER BY a.year DESC,a.title').all() as Album[];
 }
-export function getTracks(db: DatabaseSync): Track[] {
-  return db.prepare('SELECT t.id,t.title,t.artist_id artistId,r.name artistName,t.album_id albumId,a.title albumTitle,t.cover,t.duration,t.audio_url audioUrl,t.category,t.license FROM tracks t JOIN artists r ON r.id=t.artist_id JOIN albums a ON a.id=t.album_id ORDER BY t.rowid').all() as unknown as Track[];
+export async function getTracks(db: AppDatabase): Promise<Track[]> {
+  return await db.prepare('SELECT t.id,t.title,t.artist_id "artistId",r.name "artistName",t.album_id "albumId",a.title "albumTitle",t.cover,t.duration,t.audio_url "audioUrl",t.category,t.license FROM tracks t JOIN artists r ON r.id=t.artist_id JOIN albums a ON a.id=t.album_id ORDER BY t.rowid,t.id').all() as Track[];
 }
-export function getPlaylists(db: DatabaseSync, where = '1=1', ...params: any[]): Playlist[] {
-  return db.prepare(`SELECT p.*,u.name owner_name FROM playlists p LEFT JOIN users u ON u.id=p.owner_id WHERE ${where} ORDER BY p.rowid DESC`).all(...params).map((p:any)=>({id:p.id,name:p.name,description:p.description,cover:p.cover,ownerId:p.owner_id,ownerName:p.owner_name??'Spotfy',isPublic:!!p.is_public,trackIds:db.prepare('SELECT track_id FROM playlist_tracks WHERE playlist_id=? ORDER BY position').all(p.id).map((t:any)=>t.track_id)}));
+export async function getPlaylists(db: AppDatabase, where = '1=1', ...params: any[]): Promise<Playlist[]> {
+  const playlists = await db.prepare(`SELECT p.*,u.name owner_name FROM playlists p LEFT JOIN users u ON u.id=p.owner_id WHERE ${where} ORDER BY p.rowid DESC,p.id DESC`).all(...params);
+  return Promise.all(playlists.map(async (p:any)=>({id:p.id,name:p.name,description:p.description,cover:p.cover,ownerId:p.owner_id,ownerName:p.owner_name??'Spotfy',isPublic:!!p.is_public,trackIds:(await db.prepare('SELECT track_id FROM playlist_tracks WHERE playlist_id=? ORDER BY position').all(p.id)).map((t:any)=>t.track_id)})));
 }

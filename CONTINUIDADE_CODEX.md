@@ -24,7 +24,7 @@ O catálogo usa composições instrumentais e capas originais geradas localmente
 - Testes: `tests/` e configuração de navegador.
 - Documentação: `ENGENHARIA_REVERSA.md`, `INVENTARIO_FUNCIONALIDADES.md`, `ARQUITETURA.md`, `RELATORIO_TESTES.md`, este arquivo e evidências em `docs/evidence/`.
 
-O schema inicial é aditivo, usa `schema_migrations` versão 1 e cria as entidades descritas em `ARQUITETURA.md`. Não existia banco prévio. Dados gerados ficam em `data/`, ignorado pelo Git. Áudio WAV também é gerado e ignorado; executar `npm run media:generate` em novas máquinas.
+O schema inicial é aditivo, usa `schema_migrations` versão 1 e cria as entidades descritas em `ARQUITETURA.md`. Não existia banco prévio. Dados locais gerados ficam em `data/`, ignorado pelo Git. A entrega original ignorava WAV; na branch Vercel, os 12 WAV passam a ser versionados e o script continua disponível para regeneração.
 
 ## Limitações que permanecem explícitas
 
@@ -33,7 +33,7 @@ O schema inicial é aditivo, usa `schema_migrations` versão 1 e cria as entidad
 3. **Conteúdo:** catálogo independente de áudio original. Não há catálogo comercial do Spotify, Spotify Connect, DRM ou login Spotify.
 4. **Validação:** testes não executados não são aprovados. Ver o relatório para distinguir API, navegador, áudio, imagem, segurança e verificações manuais.
 5. **Publicação:** o commit de implementação `936b323` e o de documentação `0e41993` foram confirmados no remoto `feat/music-player` por `git ls-remote`. O Pull Request [#1](https://github.com/mjm5299545-source/spotfy/pull/1) foi criado contra `main` e permanece aberto.
-6. **Operação pública:** não foi solicitado deploy. HTTPS, política de dados, backups e serviço de e-mail devem ser definidos antes de operação pública.
+6. **Operação pública:** a primeira entrega não incluía deploy. A preparação da Vercel foi solicitada depois e ainda depende da conta e dos serviços externos. HTTPS, política de dados, backups e serviço de e-mail devem ser definidos antes de operação pública.
 
 ## Como retomar
 
@@ -48,3 +48,7 @@ O schema inicial é aditivo, usa `schema_migrations` versão 1 e cria as entidad
 ## Estado da publicação
 
 Implementação `936b323881ccd605c31580f5133e9cf444a1ea6e` e documentação `0e41993002f419a2f4ed69310ad136a992153fcf` publicadas em `origin/feat/music-player`. Pull Request [#1](https://github.com/mjm5299545-source/spotfy/pull/1) aberto contra `main`. No commit `914ca7b`, os checks `quality` de push e PR concluíram com `SUCCESS`; confirmar checks novamente após qualquer commit posterior. Não houve merge nem deploy.
+
+## Adendo: preparação da Vercel
+
+A branch `feat/vercel-deploy` parte de `feat/music-player` e prepara a aplicação para PostgreSQL persistente, Vercel Blob e função Node.js, preservando o modo SQLite local. Os áudios originais passam a ser versionados para estarem disponíveis no build estático. O procedimento, variáveis e verificações externas estão em [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md). Esta preparação não altera o estado do PR #1 nem representa um deploy: a conta Vercel e os serviços de armazenamento ainda não estão conectados neste ambiente. Conferir branch, SHA, testes e eventual PR de migração antes de qualquer publicação.

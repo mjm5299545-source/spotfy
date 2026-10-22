@@ -13,8 +13,8 @@ flowchart LR
   Router --> Audio[Provider + HTMLAudioElement]
   Audio --> Media[Áudio autorizado local]
   API --> Auth[Sessões opacas + autorização]
-  Auth --> DB[(SQLite)]
-  API --> Uploads[Armazenamento local privado / uploads servidos]
+  Auth --> DB[(SQLite local / PostgreSQL hospedado)]
+  API --> Uploads[Arquivos locais / Vercel Blob]
   API --> Mail[SMTP configurado / outbox local em desenvolvimento]
   Build[Vite build] --> Static[dist: interface de produção]
   API --> Static
@@ -22,9 +22,10 @@ flowchart LR
 
 - **Frontend:** React, TypeScript e React Router. Componentes consultam uma API própria. O estado de sessão e biblioteca é compartilhado; o provider de áudio fica acima das páginas, evitando recriação durante a navegação.
 - **Desenvolvimento:** Vite serve a interface e encaminha `/api` e `/uploads` para a API local. O backend escuta a porta 3001 por padrão.
-- **Produção:** `npm run build` gera `dist`; `npm start` inicia o servidor da aplicação. Node 24.15 ou posterior dentro da linha 24 é exigido pelo manifesto; SQLite usa `node:sqlite`, sem serviço externo.
+- **Produção local:** `npm run build` gera `dist`; `npm start` inicia o servidor da aplicação com SQLite. Node 24.15 ou posterior dentro da linha 24 é exigido pelo manifesto.
+- **Vercel:** `vercel.json` entrega `dist` como arquivos estáticos e encaminha `/api/*` a `api/index.ts`. A API usa PostgreSQL (`DATABASE_URL`) e Vercel Blob (`BLOB_READ_WRITE_TOKEN`) para que sessões, biblioteca e uploads sobrevivam a novas instâncias. A conta e os serviços ainda precisam ser conectados; ver [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md).
 - **Contratos:** `shared/types.ts` define usuário público, artista, álbum, faixa, playlist, catálogo, biblioteca e preferências. Senhas, hashes e tokens de sessão não fazem parte desses contratos públicos.
-- **Mídia:** `public/media` contém capas próprias e arquivos gerados pelo script de composição; o catálogo inicial está em `public/catalog.json`. Áudios WAV são gerados localmente e não versionados. Executar a geração na preparação de uma nova máquina.
+- **Mídia:** `public/media` contém capas e 12 WAV próprios, versionados para o build estático. O script de composição permite regenerá-los; o catálogo inicial está em `public/catalog.json`.
 
 ## Organização de arquivos
 
@@ -39,6 +40,8 @@ flowchart LR
 | `src/player/` | Elemento de áudio, fila, eventos, atalhos e controles |
 | `server/app.ts` | Factory da API, validação, autenticação e autorização |
 | `server/db.ts` | Schema SQLite, seed, hashes e consultas |
+| `server/postgres.ts` e `server/database-contract.ts` | Schema PostgreSQL, seed e adaptador das consultas compartilhadas |
+| `server/hosted.ts` e `api/index.ts` | Inicialização da API hospedada e entrada da função Vercel |
 | `server/index.ts` | Inicialização do processo HTTP |
 | `server/create-admin.ts` | Criação explícita do primeiro administrador |
 | `shared/types.ts` | Contratos públicos do aplicativo |
@@ -51,7 +54,7 @@ Os nomes de arquivos finais devem ser conferidos com a árvore publicada; as res
 
 ## Banco e integridade
 
-O banco padrão é `data/spotfy.sqlite`. A inicialização habilita `foreign_keys`, WAL e `busy_timeout`. O schema inicial usa criação aditiva e registra a versão 1 em `schema_migrations`. O seed só roda se não houver artistas; não apaga dados existentes. Alterações futuras de schema precisam de migrações versionadas, backup consistente de banco/WAL e teste de atualização.
+O banco local padrão é `data/spotfy.sqlite`. A inicialização habilita `foreign_keys`, WAL e `busy_timeout`. O schema inicial usa criação aditiva e registra a versão 1 em `schema_migrations`. No PostgreSQL hospedado, a inicialização usa transação e advisory lock para evitar seed concorrente; registra versões 1 e 2 e adiciona timestamps para ordenar faixas e playlists. O seed só roda se não houver artistas; não apaga dados existentes. Alterações futuras de schema precisam de migrações versionadas, backup consistente e teste de atualização.
 
 | Entidade | Dados e relações |
 | --- | --- |
@@ -115,10 +118,10 @@ Preferências de visitante podem ficar no armazenamento local. Para usuário aut
 - Zod valida entradas, tamanhos e formatos; SQL utiliza parâmetros para valores.
 - Mutação via navegador valida `Origin`/contexto cross-site; cookies não são expostos ao JavaScript.
 - Helmet aplica headers; limites de requisição e autenticação reduzem abuso básico.
-- Uploads têm limites e validação; mídia executável não deve ser servida como código. URLs de catálogo apontam para caminhos locais autorizados.
-- Configuração SMTP e credenciais de bootstrap ficam somente no processo do servidor; banco, mensagens e `.env` são ignorados pelo Git.
-- O aplicativo armazena dados pessoais e mídia no disco local. Uso público exige HTTPS, política de backup/restauração, retenção, monitoramento e revisão de capacidade.
-- SQLite e um processo de API atendem a este escopo. Escala horizontal exige coordenação e armazenamento compartilhado; não é uma capacidade demonstrada aqui.
+- Uploads têm limites e validação; mídia executável não deve ser servida como código. URLs são caminhos estáticos próprios ou objetos de Blob registrados no banco.
+- Configuração SMTP, credenciais de banco/Blob e bootstrap ficam somente no processo/segredos da plataforma; `.env` e dados locais são ignorados pelo Git.
+- Localmente, dados pessoais e uploads ficam no disco; na hospedagem, usam PostgreSQL e Vercel Blob. Uso público exige HTTPS, política de backup/restauração, retenção, monitoramento e revisão de capacidade.
+- O limitador em memória opera por instância de função. Proteção distribuída/WAF precisa ser configurada na conta para tráfego público real.
 
 ## Configuração
 
@@ -127,6 +130,8 @@ Preferências de visitante podem ficar no armazenamento local. Para usuário aut
 | `NODE_ENV` | Desenvolvimento ou produção | Não |
 | `PORT` | Porta da API | Não |
 | `DATABASE_PATH` | Caminho do banco local | Não |
+| `DATABASE_URL` | PostgreSQL persistente na hospedagem e no bootstrap administrativo | Sim |
+| `BLOB_READ_WRITE_TOKEN` | Uploads Vercel Blob | Sim |
 | `APP_ORIGIN` | Origem canônica e URL de recuperação | Não |
 | `COOKIE_SECURE` | Padrão seguro em produção; `false` somente em teste HTTP local explícito | Não |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | Transporte de e-mail | Não |
@@ -138,4 +143,4 @@ Consultar o `.env.example` e o código publicados para os nomes finais. Não inc
 
 ## Validação e continuidade
 
-Comandos previstos: `npm run typecheck`, `npm run lint`, `npm run build`, `npm test`, `npm run test:e2e`. Resultados executados estão em [RELATORIO_TESTES.md](RELATORIO_TESTES.md), e o estado de implementação/publicação em [CONTINUIDADE_CODEX.md](CONTINUIDADE_CODEX.md).
+Comandos previstos: `npm run typecheck`, `npm run lint`, `npm run build`, `npm test`, `npm run test:e2e` e `npm run test:postgres` com banco isolado. Resultados executados estão em [RELATORIO_TESTES.md](RELATORIO_TESTES.md), e o estado de implementação/publicação em [CONTINUIDADE_CODEX.md](CONTINUIDADE_CODEX.md).
