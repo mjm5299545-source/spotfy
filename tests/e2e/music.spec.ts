@@ -112,9 +112,13 @@ test('falha de mídia avisa a pessoa e a próxima faixa recupera a reprodução'
  await expect.poll(()=>audio.evaluate((a:HTMLAudioElement)=>!a.paused&&a.currentTime>0)).toBe(true);
 });
 
-test('falha do catálogo é visível e pode ser recuperada',async({page})=>{
+test('catálogo estático mantém a página e falha total pode ser recuperada',async({page})=>{
+ const staticResponse=await page.request.get('/catalog.json');const fallback=await staticResponse.json() as Catalog;
  await page.route('**/api/catalog?**',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Catálogo indisponível para este teste.'})}));
+ await page.goto('/');await expect(page.getByText(fallback.albums[0].title,{exact:true}).first()).toBeVisible();
+ await page.route('**/catalog.json',route=>route.fulfill({status:503}));
  await page.goto('/');await expect(page.getByText('Catálogo indisponível para este teste.')).toBeVisible();
+ await page.unroute('**/catalog.json');
  await page.unroute('**/api/catalog?**');await page.reload();
  const c=await catalog(page);await expect(page.getByText(c.albums[0].title,{exact:true}).first()).toBeVisible();
 });
